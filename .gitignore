@@ -1,0 +1,11 @@
+Debug/
+Release/
+**/Debug/
+**/Release/
+.metadata/
+.settings/
+*.log
+*.tmp
+*.bak
+.DS_Store
+Thumbs.db
