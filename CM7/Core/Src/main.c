@@ -22,7 +22,10 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <stdio.h>
+#include <string.h>
+#include "lwip/netif.h"
+#include "lwip/ip_addr.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -57,14 +60,17 @@
 COM_InitTypeDef BspCOMInit;
 
 /* USER CODE BEGIN PV */
-
+extern struct netif gnetif;
+static uint32_t last_diag_ms = 0;
+static uint8_t last_link_state = 0xFF;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 /* USER CODE BEGIN PFP */
-
+static void APP_PrintNetworkStatus(void);
+static void APP_PrintStartupBanner(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -129,11 +135,6 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_LWIP_Init();
-
-  /* USER CODE BEGIN 2 */
-
-  /* USER CODE END 2 */
 
   /* Initialize leds */
   BSP_LED_Init(LED_GREEN);
@@ -154,13 +155,24 @@ int main(void)
     Error_Handler();
   }
 
+  /* USER CODE BEGIN 2 */
+  APP_PrintStartupBanner();
+  /* USER CODE END 2 */
+
+  MX_LWIP_Init();
+  APP_PrintNetworkStatus();
+
   /* Infinite loop */
   while (1)
   {
     MX_LWIP_Process();
 
     /* USER CODE BEGIN 3 */
-
+    if ((HAL_GetTick() - last_diag_ms) >= 1000U)
+    {
+      last_diag_ms = HAL_GetTick();
+      APP_PrintNetworkStatus();
+    }
     /* USER CODE END 3 */
   }
 }
@@ -236,7 +248,38 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+int __io_putchar(int ch)
+{
+  uint8_t c = (uint8_t)ch;
+  (void)HAL_UART_Transmit(&hcom_uart[COM1], &c, 1U, 100U);
+  return ch;
+}
 
+static void APP_PrintStartupBanner(void)
+{
+  printf("\r\n========================================\r\n");
+  printf(" STM32H755 Ethernet Test - LwIP NO_SYS\r\n");
+  printf(" Board : NUCLEO-H755ZI-Q\r\n");
+  printf(" PHY   : LAN8742 / RMII\r\n");
+  printf(" UART  : COM1 115200 8N1\r\n");
+  printf("========================================\r\n");
+}
+
+static void APP_PrintNetworkStatus(void)
+{
+  uint8_t link_now = netif_is_link_up(&gnetif) ? 1U : 0U;
+
+  if (link_now != last_link_state)
+  {
+    last_link_state = link_now;
+    printf("LINK DEGISTI -> %s\r\n", link_now ? "UP" : "DOWN");
+  }
+
+  printf("NETIF: %s | LINK: %s | IP: %s\r\n",
+         netif_is_up(&gnetif) ? "UP" : "DOWN",
+         link_now ? "UP" : "DOWN",
+         ip4addr_ntoa(netif_ip4_addr(&gnetif)));
+}
 /* USER CODE END 4 */
 
 /**

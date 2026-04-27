@@ -49,6 +49,7 @@ MEMORY
   ITCMRAM    (xrw)    : ORIGIN = 0x00000000,   LENGTH = 64K
   RAM    (xrw)    : ORIGIN = 0x20000000,   LENGTH = 128K
   RAM_D1    (xrw)    : ORIGIN = 0x24000000,   LENGTH = 512K
+  RAM_D2    (xrw)    : ORIGIN = 0x30000000,   LENGTH = 288K
   FLASH    (rx)    : ORIGIN = 0x8000000,   LENGTH = 1024K
 }
 
@@ -179,6 +180,30 @@ SECTIONS
     . = . + _Min_Stack_Size;
     . = ALIGN(8);
   } >RAM_D1
+
+
+  /* Ethernet DMA descriptors and Rx buffer pool must be located in D2 SRAM.
+     ETH DMA cannot access DTCM. These sections are used by ethernetif.c. */
+  .RxDescripSection 0x30000000 (NOLOAD) :
+  {
+    . = ALIGN(32);
+    *(.RxDescripSection)
+    . = ALIGN(32);
+  } >RAM_D2
+
+  .TxDescripSection 0x30000080 (NOLOAD) :
+  {
+    . = ALIGN(32);
+    *(.TxDescripSection)
+    . = ALIGN(32);
+  } >RAM_D2
+
+  .Rx_PoolSection 0x30000100 (NOLOAD) :
+  {
+    . = ALIGN(32);
+    *(.Rx_PoolSection)
+    . = ALIGN(32);
+  } >RAM_D2
 
   /* Remove information from the compiler libraries */
   /DISCARD/ :

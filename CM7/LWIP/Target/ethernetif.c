@@ -153,7 +153,19 @@ lan8742_IOCtx_t  LAN8742_IOCtx = {ETH_PHY_IO_Init,
 void pbuf_free_custom(struct pbuf *p);
 
 /* USER CODE BEGIN 4 */
+static void ETH_CacheCleanByAddr(const void *addr, uint32_t len)
+{
+  uint32_t start = (uint32_t)addr & ~31UL;
+  uint32_t end = ((uint32_t)addr + len + 31UL) & ~31UL;
+  SCB_CleanDCache_by_Addr((uint32_t *)start, (int32_t)(end - start));
+}
 
+static void ETH_CacheInvalidateByAddr(const void *addr, uint32_t len)
+{
+  uint32_t start = (uint32_t)addr & ~31UL;
+  uint32_t end = ((uint32_t)addr + len + 31UL) & ~31UL;
+  SCB_InvalidateDCache_by_Addr((uint32_t *)start, (int32_t)(end - start));
+}
 /* USER CODE END 4 */
 
 /*******************************************************************************
@@ -286,6 +298,7 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
 
     Txbuffer[i].buffer = q->payload;
     Txbuffer[i].len = q->len;
+    ETH_CacheCleanByAddr(q->payload, q->len);
 
     if(i>0)
     {
@@ -304,7 +317,10 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
   TxConfig.TxBuffer = Txbuffer;
   TxConfig.pData = p;
 
-  HAL_ETH_Transmit(&heth, &TxConfig, ETH_DMA_TRANSMIT_TIMEOUT);
+  if (HAL_ETH_Transmit(&heth, &TxConfig, ETH_DMA_TRANSMIT_TIMEOUT) != HAL_OK)
+  {
+    errval = ERR_IF;
+  }
 
   return errval;
 }
@@ -769,8 +785,8 @@ void HAL_ETH_RxLinkCallback(void **pStart, void **pEnd, uint8_t *buff, uint16_t 
     p->tot_len += Length;
   }
 
-  /* Invalidate data cache because Rx DMA's writing to physical memory makes it stale. */
-  SCB_InvalidateDCache_by_Addr((uint32_t *)buff, Length);
+  /* Invalidate data cache because Rx DMA writes to memory behind the CPU cache. */
+  ETH_CacheInvalidateByAddr(buff, Length);
 
 /* USER CODE END HAL ETH RxLinkCallback */
 }
