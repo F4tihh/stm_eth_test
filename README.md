@@ -1,5 +1,6 @@
 # STM32 Ethernet Test (LwIP)
 
+<<<<<<< HEAD
 This project is a cleaned and improved STM32 Ethernet test project for **NUCLEO-H755ZI-Q / STM32H755ZITx** using **LAN8742 PHY**, **RMII**, and **LwIP NO_SYS polling mode**.
 
 ## Hardware
@@ -80,3 +81,37 @@ arp -a
 - This project uses polling mode: `MX_LWIP_Process()` is called in the main loop.
 - DHCP is disabled.
 - Descriptor and Rx pool placement in D2 SRAM is critical on STM32H7 Ethernet projects.
+=======
+This project focuses on Ethernet communication using STM32 (Nucleo H755) with LwIP stack.
+
+---
+
+## 🚀 Features
+- LwIP integration
+- Ethernet communication test
+- FreeRTOS support
+- STM32CubeIDE project
+
+---
+
+## 🔧 Hardware
+- STM32H755 Nucleo
+- LAN8742 Ethernet PHY
+
+---
+
+## 🧠 Software
+- STM32CubeIDE
+- LwIP
+- FreeRTOS
+
+---
+
+## 📡 Goal
+To establish stable Ethernet communication between STM32 and PC / PLC systems.
+
+---
+
+## 📊 Status
+🟡 In development
+>>>>>>> 90980377dda4f5852561a96a4cfc99932070c48d
